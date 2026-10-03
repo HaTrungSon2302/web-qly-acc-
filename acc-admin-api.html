@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kho Acc – Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1ee;--card:#fff;--ink:#17231f;--mute:#66736e;--line:#d9dfdb;--brand:#0f6b57;
+--farm:#2563eb;--done:#7c3aed;--queue:#0f6b57;--hold:#d97706;--sold:#64748b;--err:#dc2626;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1512;--card:#162019;--ink:#e6efe9;--mute:#8da096;--line:#27352d;--brand:#3ecf9f}}
+:root[data-theme="dark"]{--bg:#0e1512;--card:#162019;--ink:#e6efe9;--mute:#8da096;--line:#27352d;--brand:#3ecf9f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Bricolage Grotesque",system-ui,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 20px 6px}
+h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
+h1 small{display:block;font-weight:400;color:var(--mute);font-size:12px;letter-spacing:0}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select,input{font:inherit;color:var(--ink)}
+button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--brand)}
+button.p{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+input,select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;padding:10px 20px}
+.st{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.st b{display:block;font-size:22px;font-weight:800}
+.st span{color:var(--mute);font-size:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:6px 20px}
+.chip{border-radius:99px;padding:5px 12px}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.wrap{margin:8px 20px 30px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mute);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--card)}
+tr:last-child td{border-bottom:0}
+.badge{display:inline-flex;align-items:center;gap:6px;font-weight:600;border-radius:99px;padding:3px 10px;color:#fff;font-size:12px}
+.prog{width:110px;height:8px;background:var(--line);border-radius:9px;overflow:hidden;display:inline-block;vertical-align:middle}
+.prog i{display:block;height:100%;background:var(--farm)}
+.act button{padding:4px 8px;font-size:12px;margin-right:4px}
+.mute{color:var(--mute)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:20px;width:min(460px,92vw)}
+dialog::backdrop{background:#0008}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f label{display:grid;gap:4px;font-size:12px;color:var(--mute)}
+.f .w{grid-column:1/-1}
+.live{display:inline-flex;gap:6px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mute)}
+.on .dot,.live.on .dot{background:#22c55e}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kho Acc Free Fire<small>Quản lý acc cày – bán · 40 máy UMOCloud</small></h1>
+  <div class="bar">
+    <label class="mute" style="display:flex;align-items:center;gap:6px">Rank đạt <input id="tgt" type="number" min="0" style="width:90px" aria-label="Điểm rank mục tiêu"></label>
+    <input id="q" type="search" placeholder="Tìm máy, user, ID, ghi chú…" aria-label="Tìm kiếm">
+    <button id="chkall">Check tất cả</button>
+    <button id="chksel">Check đã chọn (0)</button>
+    <button id="bak">Sao lưu / Khôi phục</button>
+    <button id="impid">Dán danh sách ID</button>
+    <button id="imp">Dán danh sách gmail|pass</button>
+    <button id="cp" class="p">Sao chép đã chọn (0)</button>
+    <button id="delsel" style="color:var(--err)">Xóa đã chọn (0)</button>
+    <button id="add">+ Thêm acc</button>
+  </div>
+</header>
+<section class="stats" id="stats"></section>
+<nav class="chips" id="chips"></nav>
+<div style="padding:0 20px"><span id="chkinfo" class="mute">Tự check mỗi 5 phút.</span><details><summary class="mute" style="cursor:pointer">Phản hồi API gần nhất (để kiểm tra)</summary><pre id="raw" style="white-space:pre-wrap;word-break:break-all;font-size:12px"></pre></details></div>
+<div class="wrap"><table>
+<thead><tr><th><input type="checkbox" id="all" aria-label="Chọn tất cả"></th><th>Máy</th><th>User</th><th>Level</th><th>Điểm rank</th><th>Rank</th><th>Tiến độ cày</th><th>ID acc</th><th>Gmail | Pass</th><th>Giá vốn</th><th>Giá bán</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+<tbody id="rows"></tbody></table></div>
+
+<dialog id="dlg"><form method="dialog" id="frm">
+<h2 id="dt" style="margin:0 0 12px">Thêm acc</h2>
+<div class="f">
+<label>Máy (1–40)<input name="phone" type="number" min="1" max="40"></label>
+
+<label>Level<input name="level" type="number" min="1"></label>
+<label>Điểm rank<input name="rankPts" type="number" min="0"></label>
+<label>Tiến độ (%)<input name="prog" type="number" min="0" max="100"></label>
+<label>Giá vốn (đ)<input name="cost" type="number" min="0"></label>
+<label>Giá bán (đ)<input name="price" type="number" min="0"></label>
+<label class="w">Trạng thái<select name="status"></select></label>
+<label>Gmail<input name="email" type="email" placeholder="abc@gmail.com"></label>
+<label>Pass<input name="pass"></label>
+<label>ID acc FF<input name="ffid" inputmode="numeric"></label>
+<label>User (tên acc FF)<input name="user"></label>
+<label class="w">Ghi chú<input name="note" placeholder="Skin, kim cương, rank…"></label>
+</div>
+<div class="bar" style="justify-content:flex-end;margin-top:14px">
+<button type="button" id="cancel">Hủy</button><button class="p" type="submit">Lưu</button></div>
+</form></dialog>
+
+<dialog id="dconf"><p id="cmsg" style="margin:0 0 14px;font-size:15px"></p>
+<div class="bar" style="justify-content:flex-end"><button id="cno">Hủy</button><button id="cyes" class="p" style="background:var(--err);border-color:var(--err)">Xóa</button></div></dialog>
+<dialog id="dbak"><h2 style="margin:0 0 8px">Sao lưu / Khôi phục</h2>
+<p class="mute" style="margin:0 0 10px">Bấm <b>Copy</b> để lưu toàn bộ dữ liệu. Để chuyển sang máy/trình duyệt khác: dán nội dung đã copy vào ô này rồi bấm <b>Khôi phục</b> (sẽ thay toàn bộ dữ liệu hiện tại).</p>
+<textarea id="bakt" rows="9" style="width:100%;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);padding:8px;font-size:12px"></textarea>
+<div class="bar" style="justify-content:flex-end;margin-top:12px"><button id="bclose">Đóng</button><button id="bcopy">Copy</button><button id="brest" class="p">Khôi phục</button></div></dialog>
+<dialog id="dimpid"><form method="dialog" id="fimpid">
+<h2 style="margin:0 0 8px">Dán danh sách ID acc FF</h2>
+<p class="mute" style="margin:0 0 10px">Mỗi dòng một ID. Dòng 1 là ID của acc số 1 (cùng STT với gmail số 1), dòng 2 của acc số 2… Dòng trống thì bỏ qua acc đó.</p>
+<textarea id="idlines" rows="9" style="width:100%;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);padding:8px" placeholder="123456789&#10;987654321"></textarea>
+<div class="bar" style="justify-content:flex-end;margin-top:12px"><button type="button" id="cimpid">Hủy</button><button class="p" type="submit">Nhập</button></div>
+</form></dialog>
+<dialog id="dimp"><form method="dialog" id="fimp">
+<h2 style="margin:0 0 8px">Dán danh sách gmail|pass</h2>
+<p class="mute" style="margin:0 0 10px">Mỗi dòng một acc, dạng <b>gmail|pass</b>. Dòng 1 vào máy #1, dòng 2 vào máy #2… (máy chưa có acc sẽ được tạo mới).</p>
+<textarea id="lines" rows="9" style="width:100%;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);padding:8px" placeholder="abc@gmail.com|matkhau1&#10;xyz@gmail.com|matkhau2"></textarea>
+<div class="bar" style="justify-content:flex-end;margin-top:12px"><button type="button" id="cimp">Hủy</button><button class="p" type="submit">Nhập</button></div>
+</form></dialog>
+<script>
+const ST={farm:["Đang cày","var(--farm)"],done:["Cày xong","var(--done)"],queue:["Hàng chờ bán","var(--queue)"],hold:["Khách đặt cọc","var(--hold)"],sold:["Đã bán","var(--sold)"],err:["Lỗi / Ban","var(--err)"]};
+const KEY="acc-admin-v1";let picked=new Set(),data=[],filter="all",timer=null,editId=null;
+const $=s=>document.querySelector(s);
+const fmt=n=>(+n||0).toLocaleString("vi-VN")+"đ";
+function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}return null}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
+function seed(){const a=[];for(let i=1;i<=40;i++)a.push({id:i,phone:i,level:0,prog:0,rankPts:0,cost:1100,price:20000,status:"farm",user:"",ffid:"",note:"",email:"",pass:""});return a}
+data=load()||seed();
+function render(){
+ const c=k=>data.filter(x=>x.status===k).length;
+ const sold=data.filter(x=>x.status==="sold");
+ const rev=sold.reduce((s,x)=>s+ +x.price,0),prof=rev-sold.reduce((s,x)=>s+ +x.cost,0);
+ const pot=data.filter(x=>x.status==="queue"||x.status==="hold").reduce((s,x)=>s+ +x.price,0);
+ $("#stats").innerHTML=[["Tổng acc",data.length],["Đang cày",c("farm")],["Cày xong",c("done")],["Hàng chờ bán",c("queue")],["Đặt cọc",c("hold")],["Đã bán",c("sold")],["Doanh thu",fmt(rev)],["Lãi",fmt(prof)],["Giá trị tồn",fmt(pot)]].map(([l,v])=>`<div class="st"><b>${v}</b><span>${l}</span></div>`).join("");
+ $("#chips").innerHTML=[["all","Tất cả",data.length],...Object.keys(ST).map(k=>[k,ST[k][0],c(k)])].map(([k,l,n])=>`<button class="chip ${filter===k?"on":""}" data-f="${k}">${l} (${n})</button>`).join("");
+ const q=$("#q").value.toLowerCase();
+ const list=data.filter(x=>(filter==="all"||x.status===filter)&&(!q||[x.phone,x.user,x.ffid,x.note].join(" ").toLowerCase().includes(q)));
+ $("#rows").innerHTML=list.length?list.map(x=>{const[l,col]=ST[x.status];
+ return `<tr><td><input type="checkbox" data-k="${x.id}" ${picked.has(x.id)?"checked":""}></td><td><b>#${x.phone||"-"}</b><div class="mute">${esc(x.note)}</div></td><td>${esc(x.user)||'<span class="mute">–</span>'}</td><td>${x.level||0}</td><td>${rankCell(x)}</td><td>${rankBadge(x)}</td>
+ <td><span class="prog"><i style="width:${x.prog}%;background:${x.prog>=100?"var(--done)":"var(--farm)"}"></i></span> ${x.prog}%</td>
+ <td>${idCell(x)}</td><td>${cred(x)}</td><td>${fmt(x.cost)}</td><td>${fmt(x.price)}</td><td><span class="badge" style="background:${col}">${l}</span></td>
+ 
+ <td class="act">${next(x)}<button data-e="${x.id}">Sửa</button><button data-d="${x.id}">Xóa</button></td></tr>`}).join(""):`<tr><td colspan="13" class="mute" style="padding:30px;text-align:center">Chưa có acc nào ở mục này. Bấm "+ Thêm acc" để nhập acc mới.</td></tr>`;
+ shown=list;$("#cp").textContent="Sao chép đã chọn ("+picked.size+")";$("#delsel").textContent="Xóa đã chọn ("+picked.size+")";if($("#chksel"))$("#chksel").textContent="Check đã chọn ("+picked.size+")";$("#all").checked=list.length>0&&list.every(x=>picked.has(x.id));
+}
+let shown=[];
+function next(x){const m={farm:["done","Cày xong"],done:["queue","Đăng bán"],queue:["hold","Khách cọc"],hold:["sold","Chốt bán"]}[x.status];return m?`<button class="p" data-n="${x.id}" data-s="${m[0]}">${m[1]}</button>`:""}
+const EYE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYEOFF='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 20C5 20 1 12 1 12a18 18 0 0 1 5.1-5.9M9.9 4.2A10.7 10.7 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2M1 1l22 22"/></svg>';
+const shownPw=new Set();
+function cred(x){if(!x.email)return '<span class="mute">chưa nhập</span>';const v=shownPw.has(x.id);
+ return (v?esc(x.email)+" | <b>"+esc(x.pass)+"</b>":"•••••••• | ••••")+`<button data-v="${x.id}" aria-label="${v?"Ẩn gmail và pass":"Xem gmail và pass"}" title="${v?"Ẩn":"Xem gmail | pass"}" style="margin-left:6px;padding:3px 7px;vertical-align:middle">${v?EYEOFF:EYE}</button><button data-c="${x.id}" style="margin-left:4px;padding:2px 7px;font-size:12px">Copy</button>`}
+let cfg={target:1000};try{Object.assign(cfg,JSON.parse(localStorage.getItem(KEY+"-cfg")))}catch(e){}
+function saveCfg(){try{localStorage.setItem(KEY+"-cfg",JSON.stringify(cfg))}catch(e){}}
+function sweep(){let n=0;data.forEach(x=>{if(x.status==="farm"&&(+x.rankPts||0)>=cfg.target&&cfg.target>0){x.status="done";x.prog=100;n++}});if(n)save();return n}
+/* Bảng quy đổi điểm rank → rank (ước tính theo mùa gần đây, sửa số ở đây nếu mùa mới khác) */
+const RANKS=[[1000,"Đồng I","#a8643a"],[1100,"Đồng II","#a8643a"],[1200,"Đồng III","#a8643a"],[1300,"Bạc I","#7b8794"],[1400,"Bạc II","#7b8794"],[1500,"Bạc III","#7b8794"],[1600,"Vàng I","#c99700"],[1725,"Vàng II","#c99700"],[1850,"Vàng III","#c99700"],[1975,"Vàng IV","#c99700"],[2100,"Bạch Kim I","#0e8f9c"],[2225,"Bạch Kim II","#0e8f9c"],[2350,"Bạch Kim III","#0e8f9c"],[2475,"Bạch Kim IV","#0e8f9c"],[2600,"Kim Cương I","#2563eb"],[2750,"Kim Cương II","#2563eb"],[2900,"Kim Cương III","#2563eb"],[3050,"Kim Cương IV","#2563eb"],[3200,"Huyền Thoại","#c2410c"]];
+function rankOf(v){let r=null;for(const t of RANKS)if(v>=t[0])r=t;return r}
+const RN=["Đồng I","Đồng II","Đồng III","Bạc I","Bạc II","Bạc III","Vàng I","Vàng II","Vàng III","Vàng IV","Bạch Kim I","Bạch Kim II","Bạch Kim III","Bạch Kim IV","Kim Cương I","Kim Cương II","Kim Cương III","Kim Cương IV","Huyền Thoại","Elite Heroic","Cao Thủ","Thách Đấu"],RCOL={"Đồng":"#a8643a","Bạc":"#7b8794","Vàng":"#c99700","Bạch":"#0e8f9c","Kim":"#2563eb"};
+function rankBadge(x){const c=+x.rankCode;if(c>=301&&c-301<RN.length){const n=RN[c-301];return `<span class="badge" style="background:${RCOL[n.split(" ")[0]]||"#c2410c"}">${n}</span>`}
+ if(c>301+RN.length-1)return `<span class="badge" style="background:#c2410c">Rank #${c}</span>`;
+ const r=rankOf(+x.rankPts||0);return r?`<span class="badge" style="background:${r[2]}">${r[1]}</span>`:'<span class="mute">Chưa có</span>'}
+function idCell(x){if(!x.ffid)return '<span class="mute">–</span>';const dup=data.filter(a=>a.ffid&&a.ffid===x.ffid).length>1;const t=x.err?`<div style="color:var(--err);font-size:12px">${esc(x.err)}</div>`:(x.chk?`<div class="mute" style="font-size:12px">✓ ${new Date(x.chk).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"})}</div>`:"");const ck=typeof runChecks==="function"?`<button data-ck="${x.id}" style="margin-left:6px;padding:2px 7px;font-size:12px" title="Check acc này">Check</button>`:"";return esc(x.ffid)+ck+t+(dup?' <span class="badge" style="background:var(--err)" title="ID này bị trùng với acc khác">trùng</span>':"")}
+function rankCell(x){const v=+x.rankPts||0,ok=cfg.target>0&&v>=cfg.target;return `<b>${v.toLocaleString("vi-VN")}</b> <span class="mute">/ ${cfg.target.toLocaleString("vi-VN")}</span>`+(ok?' <span title="Đủ điểm rank" style="color:#16a34a;font-weight:700">✓ đủ</span>':"")}
+/* Gắn API check level + điểm rank: gọi applyApi(x, {level, rankPts}) rồi render() */
+function applyApi(x,r){if(r.level!=null)x.level=+r.level;if(r.rankPts!=null)x.rankPts=+r.rankPts;sweep();save()}
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+ if(t.dataset.f){filter=t.dataset.f}
+ else if(t.dataset.n){const x=data.find(a=>a.id==t.dataset.n);x.status=t.dataset.s;if(x.status==="done")x.prog=100;
+  save()}
+ else if(t.dataset.d){const id=+t.dataset.d;ask("Xóa acc này? Không thể hoàn tác.",()=>{data=data.filter(a=>a.id!==id);picked.delete(id);save();render()});return}
+ else if(t.dataset.e){openForm(+t.dataset.e);return}
+ else return;render()});
+$("#q").oninput=render;
+const sel=document.querySelector("[name=status]");sel.innerHTML=Object.keys(ST).map(k=>`<option value="${k}">${ST[k][0]}</option>`).join("");
+function openForm(id){editId=id||null;const f=$("#frm"),x=id?data.find(a=>a.id===id):{phone:"",code:"",level:1,prog:0,rankPts:0,cost:1100,price:20000,status:"farm",user:"",ffid:"",note:"",email:"",pass:""};
+ $("#dt").textContent=id?"Sửa acc":"Thêm acc";f.reset();for(const k in x)if(f.elements[k])f.elements[k].value=x[k];$("#dlg").showModal()}
+$("#add").onclick=()=>openForm();$("#cancel").onclick=()=>$("#dlg").close();
+$("#frm").onsubmit=()=>{const f=$("#frm").elements,o={};["phone","level","prog","cost","price","status","user","ffid","note","email","pass","rankPts"].forEach(k=>o[k]=f[k].value);
+ ["phone","level","prog","cost","price","rankPts"].forEach(k=>o[k]=+o[k]||0);o.prog=Math.min(100,o.prog);
+ if(o.prog>=100&&o.status==="farm")o.status="done";
+ if(editId)Object.assign(data.find(a=>a.id===editId),o);else data.push({id:Date.now(),...o});sweep();save();render()};
+
+let onYes=null;
+function ask(m,fn){$("#cmsg").textContent=m;onYes=fn;$("#dconf").showModal()}
+$("#cno").onclick=()=>$("#dconf").close();
+$("#cyes").onclick=()=>{$("#dconf").close();if(onYes)onYes();onYes=null};
+$("#delsel").onclick=()=>{const n=picked.size;if(!n){toast("Chưa chọn acc nào");return}ask("Xóa "+n+" acc đã chọn? Không thể hoàn tác.",()=>{data=data.filter(x=>!picked.has(x.id));picked.clear();save();render()})};
+document.addEventListener("click",e=>{const t=e.target.closest("[data-v]");if(!t)return;const id=+t.dataset.v;shownPw.has(id)?shownPw.delete(id):shownPw.add(id);render()});
+$("#bak").onclick=()=>{$("#bakt").value=JSON.stringify({data,cfg:{target:cfg.target}});$("#dbak").showModal()};
+$("#bclose").onclick=()=>$("#dbak").close();
+$("#bcopy").onclick=()=>{copyText($("#bakt").value);$("#bcopy").textContent="Đã copy";setTimeout(()=>$("#bcopy").textContent="Copy",1200)};
+$("#brest").onclick=()=>{let o;try{o=JSON.parse($("#bakt").value)}catch(e){}if(!o||!Array.isArray(o.data)){$("#bakt").value="";$("#bakt").placeholder="Nội dung không hợp lệ. Dán lại nội dung đã Sao lưu.";return}$("#dbak").close();ask("Khôi phục "+o.data.length+" acc? Dữ liệu hiện tại sẽ bị thay thế.",()=>{data=o.data;picked.clear();if(o.cfg&&o.cfg.target!=null){cfg.target=+o.cfg.target;$("#tgt").value=cfg.target;saveCfg()}save();render()})};
+function copyText(t){return (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()})}
+function toast(m){const b=$("#cp"),o=b.textContent;b.textContent=m;setTimeout(render,1400)}
+document.addEventListener("change",e=>{const t=e.target;if(t.id==="all"){shown.forEach(x=>t.checked?picked.add(x.id):picked.delete(x.id));render()}else if(t.dataset.k){const id=+t.dataset.k;t.checked?picked.add(id):picked.delete(id);render()}});
+document.addEventListener("click",e=>{const t=e.target.closest("[data-c]");if(!t)return;const x=data.find(a=>a.id==t.dataset.c);copyText(x.email+"|"+x.pass).then(()=>toast("Đã copy 1 acc"))});
+$("#cp").onclick=()=>{const l=data.filter(x=>picked.has(x.id)&&x.email).map(x=>x.email+"|"+x.pass);if(!l.length){toast("Chưa chọn acc nào có gmail");return}copyText(l.join("\n")).then(()=>toast("Đã copy "+l.length+" acc"))};
+$("#impid").onclick=()=>$("#dimpid").showModal();$("#cimpid").onclick=()=>$("#dimpid").close();
+$("#fimpid").onsubmit=()=>{const L=$("#idlines").value.split("\n").map(l=>l.trim());while(L.length&&!L[L.length-1])L.pop();L.forEach((id,i)=>{if(!id)return;const n=i+1;let x=data.find(a=>a.phone===n);if(!x){x={id:Date.now()+i,phone:n,level:1,prog:0,rankPts:0,cost:1100,price:20000,status:"farm",user:"",note:""};data.push(x)}x.ffid=id});save();render()};
+$("#imp").onclick=()=>$("#dimp").showModal();$("#cimp").onclick=()=>$("#dimp").close();
+$("#fimp").onsubmit=()=>{$("#lines").value.split("\n").map(l=>l.trim()).filter(Boolean).forEach((l,i)=>{const[e,...p]=l.split("|"),n=i+1;let x=data.find(a=>a.phone===n);if(!x){x={id:Date.now()+i,phone:n,code:"FF"+(1000+n*7),level:1,prog:0,cost:1100,price:20000,status:"farm",buyer:"",note:""};data.push(x)}x.email=e.trim();x.pass=p.join("|").trim()});save();render()};
+/* ===== API check ===== */
+const API="https://wuoctuan.42web.io/checkauto?UID={id}&Token=WuocTuan42&i=1",EVERY=5*60*1000;
+const KL=["level","lv","lvl","accountlevel","capdo","cap"],KR=["rankpoints","rankpoint","rankingpoints","brrankpoints","brrankpoint","brpoints","rankscore","rankingscore","diemrank","points","point","score","diem","rp","elo"],KN=["nickname","nick","accountname","username","name","ten"];
+const nk=k=>k.toLowerCase().replace(/[^a-z0-9]/g,"");
+function dig(o,keys){for(const kk of keys){const q=[o];while(q.length){const c=q.shift();if(c&&typeof c==="object")for(const k of Object.keys(c)){const v=c[k];if(nk(k)===kk&&v!==null&&typeof v!=="object")return v;if(v&&typeof v==="object")q.push(v)}}}}
+let busy=false,quota=null;
+const info=m=>{$("#chkinfo").textContent=m};
+const hhmm=()=>new Date().toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+async function checkOne(x){const ac=new AbortController(),t=setTimeout(()=>ac.abort(),15000);x.chkId=x.ffid;
+ const url=API.replace("{id}",encodeURIComponent(x.ffid));
+ try{const res=await fetch(url,{signal:ac.signal});const txt=await res.text();$("#raw").textContent="ID "+x.ffid+": "+txt.slice(0,800);
+  let j;try{j=JSON.parse(txt)}catch(e){throw new Error(/^\s*</.test(txt)?"API trả về trang HTML (bị chặn bot/cookie) – xem mục Phản hồi API":"Phản hồi không phải JSON")}
+  const b=(j&&j.basicInfo)||null;
+  const lv=b?b.level:dig(j,KL),rp=b?b.rankingPoints:dig(j,KR),nm=b?b.nickname:dig(j,KN),rc=b?b.rank:undefined;
+  if(j&&j.SoLuotHomNayServerDung!==undefined)quota=j.SoLuotHomNayServerDung;
+  if(lv===undefined&&rp===undefined&&nm===undefined)throw new Error("Không đọc được dữ liệu");
+  if(lv!=null&&!isNaN(+lv))x.level=+lv;if(rp!=null&&!isNaN(+rp))x.rankPts=+rp;if(rc!=null&&!isNaN(+rc))x.rankCode=+rc;if(nm)x.user=String(nm);
+  x.err="";x.chk=Date.now()}
+ catch(e){let m=e.name==="AbortError"?"Quá thời gian":e.message;
+  if(e.message==="Failed to fetch"){try{await fetch(url,{mode:"no-cors",signal:AbortSignal.timeout(8000)});m="Server API chặn CORS: cần thêm header Access-Control-Allow-Origin vào file checkauto"}catch(_){m="Không kết nối được tới server API (mạng/DNS)"}}
+  x.err=m;x.chk=0}
+ finally{clearTimeout(t)}}
+async function runChecks(list){list=list.filter(x=>x.ffid);if(!list.length){info("Không có acc nào có ID để check.");return}
+ if(busy){info("Đang check, đợi xong rồi bấm lại.");return}busy=true;let i=0,d=0;info("Đang check 0/"+list.length+"…");
+ const w=async()=>{while(i<list.length){const x=list[i++];await checkOne(x);d++;info("Đang check "+d+"/"+list.length+"…");save();render()}};
+ await Promise.all([w(),w(),w()]);sweep();save();render();busy=false;const bad=list.filter(x=>x.err).length;info("Check xong lúc "+hhmm()+" · "+(list.length-bad)+" ok"+(bad?" · "+bad+" lỗi":"")+" · tự check lại sau 5 phút"+(quota!=null?" · lượt API hôm nay: "+quota:""))}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-ck]");if(!t)return;const x=data.find(a=>a.id==t.dataset.ck);if(x)runChecks([x])});
+$("#chkall").onclick=()=>runChecks(data);
+$("#chksel").onclick=()=>{if(!picked.size){info("Chưa chọn acc nào để check.");return}runChecks(data.filter(x=>picked.has(x.id)))};
+setInterval(()=>{if(!busy)runChecks(data.filter(x=>x.ffid&&x.chkId!==x.ffid))},2000);
+setInterval(()=>runChecks(data.filter(x=>x.ffid&&x.status!=="sold")),EVERY);
+$("#tgt").value=cfg.target;
+$("#tgt").oninput=e=>{cfg.target=+e.target.value||0;saveCfg();sweep();render()};
+if(!cfg.v2){data.forEach(x=>{x.cost=1100;x.price=20000});cfg.v2=1;saveCfg();save()}
+if(!cfg.v3){data.forEach(x=>{if(!x.email&&!x.ffid){x.level=0;x.rankPts=0;x.prog=0;x.status="farm";x.user=""}});cfg.v3=1;saveCfg();save()}
+sweep();render();
+</script>
+</body>
+</html>
